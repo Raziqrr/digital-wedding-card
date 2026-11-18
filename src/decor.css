@@ -1,0 +1,629 @@
+/* ============================================================
+   DECOR: the page as a bolt of songket.
+   Ground = woven cloth (weft and warp threads, a faint star
+   lattice that frames the edges), joints = woven bands,
+   panels = pelamin-style gold frames.
+   ============================================================ */
+:root {
+  --lattice: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23b8913f' stroke-width='1'%3E%3Cpath d='M28 2 L54 28 L28 54 L2 28 Z'/%3E%3Cpath d='M28 15 L41 28 L28 41 L15 28 Z'/%3E%3Cpath d='M0 0 l6 6 M56 0 l-6 6 M0 56 l6 -6 M56 56 l-6 -6'/%3E%3C/g%3E%3Ccircle cx='28' cy='28' r='2' fill='%23b8913f'/%3E%3C/svg%3E");
+  --lattice-gold: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='56' height='56' viewBox='0 0 56 56'%3E%3Cg fill='none' stroke='%23d9b56a' stroke-opacity='.3' stroke-width='1'%3E%3Cpath d='M28 2 L54 28 L28 54 L2 28 Z'/%3E%3Cpath d='M28 15 L41 28 L28 41 L15 28 Z'/%3E%3Cpath d='M0 0 l6 6 M56 0 l-6 6 M0 56 l6 -6 M56 56 l-6 -6'/%3E%3C/g%3E%3Ccircle cx='28' cy='28' r='2' fill='%23d9b56a' fill-opacity='.4'/%3E%3C/svg%3E");
+}
+
+/* ---------- cloth ground for every light section ---------- */
+.hero,
+.invitation,
+.story,
+.moments,
+.gift {
+  background-image: radial-gradient(70% 38% at 0% 0%, rgba(240, 186, 150, 0.32), transparent 72%),
+    radial-gradient(60% 36% at 100% 100%, rgba(150, 196, 172, 0.28), transparent 72%),
+    repeating-linear-gradient(0deg, rgba(150, 110, 40, 0.028) 0 1px, transparent 1px 5px);
+}
+.hero {
+  background-color: var(--ivory);
+}
+.hero::before,
+.invitation::before,
+.story::before,
+.gift::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  z-index: 0;
+  pointer-events: none;
+  background: var(--lattice) center top / 56px 56px;
+  opacity: 0.27;
+  -webkit-mask-image: radial-gradient(ellipse 70% 58% at 50% 50%, rgba(0, 0, 0, 0.04) 0%, #000 100%);
+  mask-image: radial-gradient(ellipse 70% 58% at 50% 50%, rgba(0, 0, 0, 0.04) 0%, #000 100%);
+}
+.invitation,
+.gift {
+  overflow: hidden;
+}
+
+/* ---------- live cloth (WebGL): once it draws, sections let it show through ---------- */
+.cloth {
+  position: fixed;
+  inset: 0;
+  z-index: 0;
+  display: block;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+  /* a touch of softness so the weave sits behind the text, not on it; the scale hides the blurred rim */
+  filter: blur(1.3px);
+  transform: scale(1.015);
+}
+html[data-gl] .page {
+  position: relative;
+  z-index: 1;
+}
+html[data-gl] .hero,
+html[data-gl] .invitation,
+html[data-gl] .story,
+html[data-gl] .moments,
+html[data-gl] .gift,
+html[data-gl] .events,
+html[data-gl] .rsvp,
+html[data-gl] .footer {
+  background: transparent;
+}
+/* the cloth carries the pattern now, so the flat star watermarks step aside */
+html[data-gl] .star-wrap {
+  display: none;
+}
+html[data-gl] .hero::before,
+html[data-gl] .invitation::before,
+html[data-gl] .story::before,
+html[data-gl] .gift::before,
+html[data-gl] .events::before,
+html[data-gl] .rsvp::before,
+html[data-gl] .footer::before {
+  display: none;
+}
+
+/* ---------- the camera: the hero pulls back as you scroll away from it ---------- */
+@supports (animation-timeline: view()) {
+  .hero-inner {
+    animation: hero-pull linear both;
+    animation-timeline: view();
+    animation-range: exit 5% exit 85%;
+  }
+  @keyframes hero-pull {
+    to {
+      scale: 0.9;
+      translate: 0 -34px;
+      opacity: 0.15;
+    }
+  }
+}
+/* language change: the page cross-fades instead of snapping */
+::view-transition-old(root),
+::view-transition-new(root) {
+  animation-duration: 0.45s;
+}
+
+/* ---------- tirai: the curtain over the hero ---------- */
+.tirai {
+  position: absolute;
+  inset: 0;
+  z-index: 8;
+  width: 100%;
+  height: 100%;
+  touch-action: none;
+  cursor: grab;
+}
+.tirai.parted {
+  z-index: 1; /* tied back at the sides, under the hero text */
+  pointer-events: none;
+  touch-action: auto;
+  cursor: auto;
+}
+.tirai-ui {
+  position: absolute;
+  z-index: 9;
+  left: 0;
+  right: 0;
+  top: 0;
+  height: 100svh; /* the first screen, even when the hero is taller */
+  display: grid;
+  align-content: end;
+  justify-items: center;
+  gap: 16px;
+  padding: 0 24px clamp(70px, 14svh, 150px);
+  text-align: center;
+  pointer-events: none;
+  animation: tirai-in 1.2s 0.4s both;
+}
+.tirai-ui::before {
+  content: '';
+  position: absolute;
+  inset: auto 0 0 0;
+  height: 62%;
+  z-index: -1;
+  background: radial-gradient(70% 55% at 50% 72%, rgba(2, 22, 18, 0.78), transparent 100%);
+}
+.tirai-ui.gone {
+  opacity: 0;
+  translate: 0 10px;
+  transition: opacity 0.5s, translate 0.5s;
+  animation: none;
+}
+.tirai-ui .btn {
+  pointer-events: auto;
+}
+.tirai-ui.gone .btn {
+  pointer-events: none;
+}
+.tirai-hint {
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.28rem;
+  color: var(--gold-300);
+  text-shadow: 0 2px 14px rgba(0, 0, 0, 0.7);
+}
+.tirai-hint span {
+  display: inline-block;
+  font-style: normal;
+  font-size: 1.5rem;
+  animation: tirai-nudge 1.8s ease-in-out infinite;
+}
+.tirai-hint span:last-child {
+  animation-direction: reverse;
+}
+@keyframes tirai-in {
+  from {
+    opacity: 0;
+    translate: 0 14px;
+  }
+}
+@keyframes tirai-nudge {
+  50% {
+    translate: -6px 0;
+  }
+}
+
+/* ---------- woven bands between sections ---------- */
+.songket {
+  position: relative;
+  z-index: 3;
+  overflow: hidden;
+  padding: 11px 0;
+  background: linear-gradient(var(--gold-400), var(--gold-400)) 0 5px / 100% 1px no-repeat,
+    linear-gradient(var(--gold-400), var(--gold-400)) 0 calc(100% - 5px) / 100% 1px no-repeat,
+    linear-gradient(180deg, #0d5846, #073a30);
+  box-shadow: 0 10px 24px -12px rgba(4, 37, 31, 0.55);
+}
+.songket svg {
+  display: block;
+}
+.songket::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  mix-blend-mode: screen;
+  background: linear-gradient(100deg, transparent 42%, rgba(255, 246, 214, 0.42) 50%, transparent 58%) 100% 0 / 300% 100% no-repeat;
+  animation: glint 10s linear infinite;
+}
+
+.songket[data-off]::after,
+.star-wrap[data-off] .star-mark {
+  animation-play-state: paused;
+}
+
+/* ---------- corner brackets + huge slow rosettes ---------- */
+.corners {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  color: var(--gold-400);
+}
+.corner {
+  position: absolute;
+  width: var(--cs, 30px);
+  height: var(--cs, 30px);
+}
+.corner.tl {
+  top: 0;
+  left: 0;
+}
+.corner.tr {
+  top: 0;
+  right: 0;
+  transform: scaleX(-1);
+}
+.corner.bl {
+  bottom: 0;
+  left: 0;
+  transform: scaleY(-1);
+}
+.corner.br {
+  right: 0;
+  bottom: 0;
+  transform: scale(-1, -1);
+}
+.star-wrap {
+  position: absolute;
+  z-index: 0;
+  pointer-events: none;
+  translate: -50% -50%;
+  color: #b8913f;
+}
+.star-mark {
+  width: 100%;
+  height: auto;
+  animation: spin 160s linear infinite;
+}
+
+/* ---------- hero: a gold frame hung beneath the string lights ---------- */
+.hero-star {
+  left: 50%;
+  top: 46%;
+  width: min(135vw, 880px);
+  opacity: 0.12;
+}
+.hero-frame {
+  position: absolute;
+  z-index: 1;
+  top: max(66px, 8.4vw);
+  left: 14px;
+  right: 14px;
+  bottom: 14px;
+  border: 1px solid rgba(193, 154, 73, 0.62);
+  border-radius: 6px;
+  pointer-events: none;
+}
+.hero-frame::before {
+  content: '';
+  position: absolute;
+  inset: 5px;
+  border: 1px solid rgba(193, 154, 73, 0.28);
+  border-radius: 3px;
+}
+.hero-frame .corners {
+  inset: -2px;
+  --cs: 36px;
+}
+@media (min-width: 1000px) {
+  .hero-frame {
+    left: 30px;
+    right: 30px;
+    bottom: 30px;
+  }
+  .hero-frame .corners {
+    --cs: 46px;
+  }
+}
+
+/* ---------- framed panels with an arched top ---------- */
+.frame-card {
+  position: relative;
+  margin: 0 auto;
+  padding: clamp(40px, 6vw, 62px) clamp(20px, 5vw, 50px) clamp(34px, 6vw, 54px);
+  border: 1px solid rgba(193, 154, 73, 0.62);
+  border-radius: 220px 220px 10px 10px;
+  background: linear-gradient(180deg, rgba(255, 253, 246, 0.84), rgba(251, 247, 238, 0.68));
+  box-shadow: 0 34px 70px -40px rgba(122, 91, 31, 0.55), inset 0 0 0 7px rgba(251, 247, 238, 0.92), inset 0 0 0 8px rgba(193, 154, 73, 0.34);
+}
+.frame-card::before {
+  content: '';
+  position: absolute;
+  left: 50%;
+  top: -7px;
+  width: 13px;
+  height: 13px;
+  margin-left: -6.5px;
+  background: var(--gold-500);
+  transform: rotate(45deg);
+  box-shadow: 0 0 0 3px var(--ivory);
+}
+.frame-card .sec-head {
+  margin-bottom: clamp(26px, 5vw, 40px);
+}
+.inv-star {
+  left: 50%;
+  top: 52%;
+  width: min(150vw, 980px);
+  opacity: 0.11;
+}
+
+/* ---------- story: sprigs growing in from the corners ---------- */
+.grow-sprig {
+  position: absolute;
+  z-index: 0;
+  width: min(36vw, 250px);
+  color: #ad8634;
+  opacity: 0.32;
+  pointer-events: none;
+}
+.grow-sprig .sprig {
+  width: 100%;
+  height: auto;
+  overflow: visible;
+}
+.grow-sprig.s-tr {
+  top: -6px;
+  right: -26px;
+  transform: rotate(180deg);
+}
+.grow-sprig.s-bl {
+  bottom: -6px;
+  left: -26px;
+}
+@media (min-width: 1000px) {
+  .grow-sprig {
+    width: 300px;
+    opacity: 0.4;
+  }
+}
+
+/* ---------- moments: the arches stand on an emerald stage ---------- */
+.stage {
+  --stage-top: clamp(118px, 29vw, 150px);
+  position: relative;
+  margin: 0 -24px; /* full bleed: cancel the section's side padding */
+}
+.stage::before {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: calc(var(--stage-top) + 30px);
+  bottom: calc(clamp(64px, 10vw, 120px) * -1);
+  z-index: 0;
+  background: var(--lattice-gold) 0 0 / 56px 56px, linear-gradient(180deg, #073a30, #0d5846);
+}
+.stage .stage-band {
+  position: absolute;
+  left: 0;
+  right: 0;
+  top: var(--stage-top);
+  z-index: 1;
+}
+.stage .arches {
+  position: relative;
+  z-index: 2;
+}
+
+/* ---------- visitor switches: larger text, quiet page ---------- */
+html[data-big] {
+  font-size: 118%;
+}
+.ctrl-stack {
+  position: fixed;
+  z-index: 45;
+  right: 16px;
+  top: calc(max(16px, env(safe-area-inset-top)) + 46px);
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  gap: 8px;
+}
+.ctrl {
+  min-height: 36px;
+  padding: 0 13px;
+  border: 1px solid rgba(193, 154, 73, 0.6);
+  border-radius: 99px;
+  background: rgba(251, 247, 238, 0.8);
+  backdrop-filter: blur(10px);
+  color: var(--gold-800);
+  font-size: 0.74rem;
+  font-weight: 500;
+  letter-spacing: 0.1em;
+  transition: translate 0.18s ease-out, background 0.25s, color 0.25s;
+}
+.ctrl[aria-pressed='true'] {
+  background: var(--emerald-900);
+  border-color: var(--emerald-900);
+  color: var(--gold-300);
+}
+html[data-calm] *,
+html[data-calm] *::before,
+html[data-calm] *::after {
+  animation: none !important;
+  transition-duration: 0.001ms !important;
+  scroll-behavior: auto !important;
+}
+html[data-calm] .gold-dust,
+html[data-calm] .sparks {
+  display: none;
+}
+
+/* ---------- pantun reply ---------- */
+.seg-small {
+  margin-bottom: 14px;
+}
+.seg-small button {
+  padding: 9px 6px;
+  font-size: 0.86rem;
+}
+.pantun-couple {
+  margin: 0 0 14px;
+  padding: 14px 16px 14px 18px;
+  border-left: 3px solid var(--gold-500);
+  border-radius: 4px 14px 14px 4px;
+  background: rgba(217, 181, 106, 0.14);
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.12rem;
+  line-height: 1.45;
+  color: var(--emerald-900);
+}
+.pantun-couple cite {
+  display: block;
+  margin-bottom: 6px;
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 0.66rem;
+  letter-spacing: 0.24em;
+  text-transform: uppercase;
+  color: var(--gold-800);
+}
+.pantun-couple span {
+  display: block;
+}
+.pantun-couple small {
+  display: block;
+  margin-top: 8px;
+  font-family: var(--sans);
+  font-style: normal;
+  font-size: 0.82rem;
+  line-height: 1.4;
+  color: var(--muted);
+}
+.pantun-help {
+  margin-bottom: 10px;
+  font-size: 0.88rem;
+  color: var(--muted);
+}
+.pantun-line {
+  position: relative;
+  display: block;
+  margin-bottom: 8px;
+}
+.pantun-line input {
+  padding-right: 64px;
+}
+.pantun-line em {
+  position: absolute;
+  right: 14px;
+  top: 50%;
+  translate: 0 -50%;
+  font-style: normal;
+  font-size: 0.8rem;
+  letter-spacing: 0.06em;
+  color: var(--gold-800);
+}
+.pantun-meter {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: 4px;
+}
+.rhyme {
+  padding: 5px 12px;
+  border-radius: 99px;
+  border: 1px solid rgba(138, 106, 42, 0.4);
+  font-size: 0.8rem;
+  color: var(--muted);
+  transition: background 0.3s, color 0.3s, border-color 0.3s;
+}
+.rhyme.match {
+  background: var(--emerald-900);
+  border-color: var(--emerald-900);
+  color: var(--gold-300);
+}
+.rhyme.miss {
+  background: rgba(176, 52, 52, 0.1);
+  border-color: rgba(176, 52, 52, 0.5);
+  color: #8a2a2a;
+}
+.wishes li span.is-pantun {
+  white-space: pre-line;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.08rem;
+  line-height: 1.45;
+}
+
+/* ---------- richer ornament, dark-section extras ---------- */
+.ornament {
+  width: 190px;
+}
+.event .corners {
+  inset: 9px;
+  --cs: 24px;
+  color: var(--gold-300);
+}
+.rsvp-card .corners {
+  inset: 10px;
+  --cs: 26px;
+  color: var(--gold-500);
+}
+.rsvp-star {
+  right: -4%;
+  top: 4%;
+  width: min(120vw, 700px);
+  translate: 0 0;
+  color: var(--gold-400);
+  opacity: 0.1;
+}
+.foot-star {
+  left: 50%;
+  top: 46%;
+  width: min(130vw, 760px);
+  color: var(--gold-400);
+  opacity: 0.12;
+}
+
+/* ---------- wedding day: what is happening now ---------- */
+.day-status {
+  display: grid;
+  gap: 9px;
+  min-width: min(84vw, 330px);
+  padding: 16px 22px 18px;
+  border: 1px solid rgba(193, 154, 73, 0.5);
+  border-radius: 18px;
+  background: linear-gradient(180deg, rgba(255, 255, 255, 0.9), rgba(255, 255, 255, 0.7));
+}
+.day-today {
+  text-align: center;
+  font-size: 0.7rem;
+  letter-spacing: 0.3em;
+  text-transform: uppercase;
+  color: var(--gold-800);
+}
+.day-row {
+  display: grid;
+  grid-template-columns: 14px 1fr auto;
+  align-items: center;
+  gap: 10px;
+  text-align: left;
+  color: var(--emerald-900);
+}
+.day-row i {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: rgba(122, 91, 31, 0.32);
+}
+.day-row.now i {
+  background: #2f9d6a;
+  animation: day-pulse 1.8s ease-out infinite;
+}
+.day-row.done i {
+  background: var(--gold-500);
+}
+.day-row span {
+  font-size: 0.86rem;
+  color: var(--gold-800);
+}
+.day-done {
+  max-width: 22ch;
+  margin: 0 auto;
+  font-family: var(--serif);
+  font-style: italic;
+  font-size: 1.3rem;
+  line-height: 1.4;
+  color: var(--emerald-900);
+}
+@keyframes day-pulse {
+  0% {
+    box-shadow: 0 0 0 0 rgba(47, 157, 106, 0.55);
+  }
+  70%,
+  100% {
+    box-shadow: 0 0 0 9px rgba(47, 157, 106, 0);
+  }
+}
+.share-btn {
+  margin-top: 26px;
+}
+
+/* sprigs shrink on narrow screens so their stems stay out of the greeting */
+@media (max-width: 560px) {
+  .sprig-wrap {
+    width: min(30vw, 160px);
+  }
+}
